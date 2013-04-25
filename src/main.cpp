@@ -16,7 +16,8 @@ private:
 	visnav2013_exercise::TrajectoryVisualizer visualizer_;
 
 	tf::Transform pose_;
-	float time_pre;
+	int time_pre_sec;
+	int time_pre_nsec;
 public:
 	ARDroneOdometry(ros::NodeHandle& nh) :
 			visualizer_(nh) {
@@ -35,28 +36,33 @@ public:
 	void onNavdata(const ardrone_autonomy::NavdataConstPtr& navdata) {
 		ROS_INFO_STREAM("received navdata @" << navdata->header.stamp);
 
-
+		//Print v_x, v_y, yaw, height and their units.
 		ROS_INFO_STREAM(
 				"vx: "<<navdata->vx << " mm/s"<<"; vy: "<<navdata->vy << " mm/s"<<"; yaw: "<<navdata->rotZ <<" Degree" << "; height: "<<navdata->altd <<" mm ");
 
 
 		// TODO: compute odometry and update 'pose_' accordingly, use your solution from Exercise 1
-		//Calculate the global velocity vector v_g from the local one v_l
-		tfScalar roll=navdata->rotX, vx_l=navdata->vx,vy_l=navdata->vy,vz_l=navdata->vz;
-		tfScalar pitch=navdata->rotY;
-		tfScalar yaw=navdata->rotZ;
+		//Calculate the global velocity vector v_g from the local velocity vector v_l
+		tfScalar roll=navdata->rotX, pitch=navdata->rotY, yaw=navdata->rotZ;
+		tfScalar vx_l=navdata->vx,vy_l=navdata->vy,vz_l=navdata->vz;
+
 		tf::Vector3 v_l(vx_l,vy_l,vz_l),v_g;
 		tf::Matrix3x3 rot;
-		rot.setEulerYPR(yaw,pitch,roll);
+		rot.setEulerZYX(yaw,pitch,roll);
 		v_g = rot * v_l;
 
-		//
-		float t = navdata->header.stamp.sec + navdata->header.stamp.nsec *0.000000001;
-		float dt = 0;
-		if(time_pre){
-			dt = t - time_pre;
+		//Calculate the time difference in nano second.
+		int t_sec = navdata->header.stamp.sec;
+		int t_nsec = navdata->header.stamp.nsec;
+
+		int dt = 0;
+		if(time_pre_sec){
+			dt = (t_sec - time_pre_sec)*1000000000 + (t_nsec - time_pre_nsec);
 		}
-		time_pre = t;
+		time_pre_sec = navdata->header.stamp.sec;
+		time_pre_nsec = navdata->header.stamp.nsec;
+
+//		ROS_INFO_STREAM("dt: "<<dt);
 
 		tfScalar x_t = pose_.getOrigin().getX()+v_g.getX()*dt;
 		tfScalar y_t = pose_.getOrigin().getY()+v_g.getY()*dt;
