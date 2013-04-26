@@ -16,8 +16,15 @@ private:
 	visnav2013_exercise::TrajectoryVisualizer visualizer_;
 
 	tf::Transform pose_;
+
+    // variables to use new pose estimation
 	int time_pre_sec;
 	int time_pre_nsec;
+    tfScalar        roll,  pitch,  yaw;    // rotation angles
+    tfScalar        vx_l,  vy_l,   vz_l;   // axis velocities
+    tf::Vector3     v_g;                   // global velocity vectors
+    tf::Matrix3x3   rot;                   // velocity rotation matrix
+    tfScalar        x_t,    y_t,    z_t;   // current position
 public:
 	ARDroneOdometry(ros::NodeHandle& nh) :
 			visualizer_(nh) {
@@ -43,12 +50,16 @@ public:
 
 		// TODO: compute odometry and update 'pose_' accordingly, use your solution from Exercise 1
 		//Calculate the global velocity vector v_g from the local velocity vector v_l
-		tfScalar roll=navdata->rotX, pitch=navdata->rotY, yaw=navdata->rotZ;
-		tfScalar vx_l=navdata->vx,vy_l=navdata->vy,vz_l=navdata->vz;
+        roll	=navdata->rotX;
+        pitch	=navdata->rotY;
+        yaw     =navdata->rotZ;
+        vx_l	=navdata->vx;
+        vy_l	=navdata->vy;
+        vz_l	=navdata->vz;
 
-		tf::Vector3 v_l(vx_l,vy_l,vz_l),v_g;
-		tf::Matrix3x3 rot;
-		rot.setEulerZYX(yaw,pitch,roll);
+        tf::Vector3 v_l(vx_l,vy_l,vz_l); // LOCAL VELOCITY VECTOR
+
+		rot.setEulerZYX(yaw,pitch,roll);     
 		v_g = rot * v_l;
 
 		//Calculate the time difference in nano second.
@@ -64,10 +75,11 @@ public:
 
 //		ROS_INFO_STREAM("dt: "<<dt);
 
-		tfScalar x_t = pose_.getOrigin().getX()+v_g.getX()*dt;
-		tfScalar y_t = pose_.getOrigin().getY()+v_g.getY()*dt;
-		tfScalar z_t = navdata->altd;
+        x_t = pose_.getOrigin().getX()  +   v_g.getX()  *   dt;
+        y_t = pose_.getOrigin().getY()  +   v_g.getY()  *   dt;
+        z_t = navdata->altd;    // assignt altitude since z_t 0.0 in bag files
 		pose_.setOrigin(tf::Vector3(x_t,y_t,z_t));
+        pose_.setRotation(tf::Quaternion(yaw,pitch,roll));
 
 		visualizer_.addPose(pose_).publish();
 
