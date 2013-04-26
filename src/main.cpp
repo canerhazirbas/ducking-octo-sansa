@@ -62,18 +62,21 @@ public:
 		rot.setEulerZYX(yaw,pitch,roll);     
 		v_g = rot * v_l;
 
+
 		//Calculate the time difference in nano second.
 		int t_sec = navdata->header.stamp.sec;
 		int t_nsec = navdata->header.stamp.nsec;
 
-        int dt = 0;
+	double dt = 0;
 		if(time_pre_sec){
             dt = (t_sec - time_pre_sec) + 0.0000000001 * (t_nsec - time_pre_nsec);
 		}
+		//ROS_INFO_STREAM("t_nsec: "<< (t_nsec));
+		//ROS_INFO_STREAM("time_pre_nsec: "<< (time_pre_nsec));
 		time_pre_sec = navdata->header.stamp.sec;
 		time_pre_nsec = navdata->header.stamp.nsec;
 
-//		ROS_INFO_STREAM("dt: "<<dt);
+		//ROS_INFO_STREAM("dt: "<<dt);
 
             x_t = pose_.getOrigin().getX()  +   v_g.getX()  *   dt;
         	y_t = pose_.getOrigin().getY()  +   v_g.getY()  *   dt;
@@ -81,9 +84,12 @@ public:
             pose_.setOrigin(tf::Vector3(x_t,y_t,z_t));
         	pose_.setRotation(tf::Quaternion(yaw,pitch,roll));
 
-            ROS_INFO_STREAM("t_nsec: "<< (t_nsec));
-            ROS_INFO_STREAM("time_pre_nsec: "<< (time_pre_nsec));
-
+                //tf::Vector3 row1 = rot.getRow(0);
+                //tf::Vector3 row2 = rot.getRow(1);
+                //tf::Vector3 row3 = rot.getRow(2);
+                //ROS_INFO_STREAM("POSE: "<< row1.getX() << " "<< row1.getY() << " "<< row1.getZ());
+                //ROS_INFO_STREAM("POSE: "<< row2.getX() << " "<< row2.getY() << " "<< row2.getZ());
+                //ROS_INFO_STREAM("POSE: "<< row3.getX() << " "<< row3.getY() << " "<< row3.getZ());
 		visualizer_.addPose(pose_).publish();
 
 	}
