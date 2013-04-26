@@ -18,13 +18,13 @@ private:
 	tf::Transform pose_;
 
     // variables to use new pose estimation
-	int time_pre_sec;
-	int time_pre_nsec;
+        double time_pre_sec;
+        double time_pre_nsec;
     	tfScalar        roll,  pitch,  yaw;    // rotation angles
-    tfScalar        vx_l,  vy_l,   vz_l;   // axis velocities
-    tf::Vector3     v_g;                   // global velocity vectors
+        tfScalar        vx_l,  vy_l,   vz_l;   // axis velocities
+        tf::Vector3     v_g;                   // global velocity vectors
         tf::Matrix3x3   rot;                   // velocity rotation matrix
-    tfScalar        x_t,    y_t,    z_t;   // current position
+        tfScalar        x_t,    y_t,    z_t;   // current position
 public:
 	ARDroneOdometry(ros::NodeHandle& nh) :
 			visualizer_(nh) {
@@ -64,12 +64,12 @@ public:
 
 
 		//Calculate the time difference in nano second.
-		int t_sec = navdata->header.stamp.sec;
-		int t_nsec = navdata->header.stamp.nsec;
+		double t_sec = navdata->header.stamp.sec;
+		double t_nsec = navdata->header.stamp.nsec;
 
-	double dt = 0;
+		double dt = 0;
 		if(time_pre_sec){
-            dt = (t_sec - time_pre_sec) + 0.0000000001 * (t_nsec - time_pre_nsec);
+			dt = (t_sec - time_pre_sec) + 0.0000000001 * (t_nsec - time_pre_nsec);
 		}
 		//ROS_INFO_STREAM("t_nsec: "<< (t_nsec));
 		//ROS_INFO_STREAM("time_pre_nsec: "<< (time_pre_nsec));
@@ -78,18 +78,15 @@ public:
 
 		//ROS_INFO_STREAM("dt: "<<dt);
 
-            x_t = pose_.getOrigin().getX()  +   v_g.getX()  *   dt;
+                x_t = pose_.getOrigin().getX()  +   v_g.getX()  *   dt;
         	y_t = pose_.getOrigin().getY()  +   v_g.getY()  *   dt;
-            z_t = navdata->altd;    // assign altitude since z_t 0.0 in bag files
-            pose_.setOrigin(tf::Vector3(x_t,y_t,z_t));
+                z_t = navdata->altd;    // assign altitude since z_t 0.0 in bag files
+                pose_.setOrigin(tf::Vector3(x_t,y_t,z_t));
         	pose_.setRotation(tf::Quaternion(yaw,pitch,roll));
 
-                //tf::Vector3 row1 = rot.getRow(0);
-                //tf::Vector3 row2 = rot.getRow(1);
-                //tf::Vector3 row3 = rot.getRow(2);
-                //ROS_INFO_STREAM("POSE: "<< row1.getX() << " "<< row1.getY() << " "<< row1.getZ());
-                //ROS_INFO_STREAM("POSE: "<< row2.getX() << " "<< row2.getY() << " "<< row2.getZ());
-                //ROS_INFO_STREAM("POSE: "<< row3.getX() << " "<< row3.getY() << " "<< row3.getZ());
+
+                //ROS_INFO_STREAM("X_GLOBAL: "<< x_t);
+
 		visualizer_.addPose(pose_).publish();
 
 	}
