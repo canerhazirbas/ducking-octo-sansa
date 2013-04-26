@@ -1,5 +1,0 @@
-bin
-lib
-build
-.*project
-cmake_install.cmake
