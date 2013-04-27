@@ -26,6 +26,9 @@ private:
 	tf::Vector3 v_g;                   // global velocity vectors
 	tf::Matrix3x3 rot;                   // velocity rotation matrix
 	tfScalar x_t, y_t, z_t;   // current position
+	tfScalar dist;
+	tfScalar heightSum;
+	int iteration;
 public:
 	ARDroneOdometry(ros::NodeHandle& nh) :
 			visualizer_(nh) {
@@ -36,6 +39,9 @@ public:
 				boost::bind(&ARDroneOdometry::onNavdata, this, _1));
 
 		ROS_INFO("Subscribed to '/ardrone/navdata' topic.");
+		dist = 0;
+		heightSum = 0;
+		iteration = 0;
 	}
 
 	/**
@@ -83,7 +89,10 @@ public:
 		y_t = pose_.getOrigin().getY() + v_g.getY() * dt;
 		z_t = navdata->altd;    // assign altitude since z_t 0.0 in bag files
 		pose_.setOrigin(tf::Vector3(x_t, y_t, z_t));
-
+		dist = dist + dt* sqrt(v_g.getX()*v_g.getX()+v_g.getY()*v_g.getY()+v_g.getZ()*v_g.getZ()); //Calculate travelled distance
+		heightSum = heightSum + navdata->altd;
+		iteration = iteration + 1;
+		ROS_INFO_STREAM("Distance travelled: " << dist << " Mean height: " << heightSum/iteration);
 
 		tf::Quaternion quaternion;
 		quaternion.setEuler(yaw, pitch, roll);
