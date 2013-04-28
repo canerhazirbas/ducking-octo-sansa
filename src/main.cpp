@@ -50,12 +50,11 @@ public:
 	void onNavdata(const ardrone_autonomy::NavdataConstPtr& navdata) {
 		ROS_INFO_STREAM("received navdata @" << navdata->header.stamp);
 
-		//Print v_x, v_y, yaw, height and their units.
+		//print v_x, v_y, yaw, height and their units.
 		ROS_INFO_STREAM(
 				"vx: "<<navdata->vx << " mm/s"<<"; vy: "<<navdata->vy << " mm/s"<<"; yaw: "<<navdata->rotZ <<" Degree" << "; height: "<<navdata->altd <<" mm ");
 
-		// TODO: compute odometry and update 'pose_' accordingly, use your solution from Exercise 1
-		//Calculate the global velocity vector v_g from the local velocity vector v_l
+		//calculate the global velocity vector v_g from the local velocity vector v_l
 		roll = navdata->rotX*M_PI/180.0;
 		pitch = navdata->rotY*M_PI/180.0;
 		yaw = navdata->rotZ*M_PI/180.0;
@@ -83,22 +82,26 @@ public:
 		time_pre_sec = navdata->header.stamp.sec;
 		time_pre_nsec = navdata->header.stamp.nsec;
 
-		ROS_INFO_STREAM("dt: "<<dt);
-		ROS_INFO_STREAM("pose_x: "<<pose_.getOrigin().getX()<<"pose_y: "<<pose_.getOrigin().getY()<<"pose_z: "<<pose_.getOrigin().getZ());
-		x_t = pose_.getOrigin().getX() + v_g.getX() * dt;
-		y_t = pose_.getOrigin().getY() + v_g.getY() * dt;
+		//calculate pose differences
+		float dx = v_g.getX() * dt;
+		float dy = v_g.getY() * dt;
+		float dz = navdata->altd - pose_.getOrigin().getZ();
+
+		x_t = pose_.getOrigin().getX() + dx;
+		y_t = pose_.getOrigin().getY() + dy;
 		z_t = navdata->altd;    // assign altitude since z_t 0.0 in bag files
-		pose_.setOrigin(tf::Vector3(x_t, y_t, z_t));
-		dist = dist + dt* sqrt(v_g.getX()*v_g.getX()+v_g.getY()*v_g.getY()+v_g.getZ()*v_g.getZ()); //Calculate travelled distance
+
+		dist = dist + sqrt(dx*dx+dy*dy+dz*dz); //Calculate travelled distance
 		heightSum = heightSum + navdata->altd;
 		iteration = iteration + 1;
 		ROS_INFO_STREAM("Distance travelled: " << dist << " Mean height: " << heightSum/iteration);
 
+		//update pose
 		tf::Quaternion quaternion;
 		quaternion.setEuler(yaw, pitch, roll);
 		pose_.setRotation(quaternion);
+		pose_.setOrigin(tf::Vector3(x_t, y_t, z_t));
 
-		//ROS_INFO_STREAM("X_GLOBAL: " << x_t);
 		visualizer_.addPose(pose_).publish();
 
 	}
