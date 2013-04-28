@@ -87,9 +87,9 @@ public:
 		float dy = v_g.getY() * dt;
 		float dz = navdata->altd - pose_.getOrigin().getZ();
 
-		x_t = pose_.getOrigin().getX() + dx;
-		y_t = pose_.getOrigin().getY() + dy;
-		z_t = navdata->altd;    // assign altitude since z_t 0.0 in bag files
+		x_t = (pose_.getOrigin().getX() + dx) * 0.001 ; // mm to meters
+		y_t = (pose_.getOrigin().getY() + dy) * 0.001 ; // mm to meters
+		z_t = navdata->altd * 0.001;    // assign altitude since z_t 0.0 in bag files, // mm to meters
 
 		dist = dist + sqrt(dx*dx+dy*dy+dz*dz); //Calculate travelled distance
 		heightSum = heightSum + navdata->altd;
