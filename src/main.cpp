@@ -58,6 +58,7 @@ public:
 		roll = navdata->rotX*M_PI/180.0;
 		pitch = navdata->rotY*M_PI/180.0;
 		yaw = navdata->rotZ*M_PI/180.0;
+
 		vx_l = navdata->vx;
 		vy_l = navdata->vy;
 		vz_l = navdata->vz;
@@ -66,8 +67,6 @@ public:
 
 		rot.setEulerYPR(yaw, pitch, roll);
 		v_g = rot * v_l;
-
-		ROS_INFO_STREAM("v_g_x: "<<v_g.getX()<<", v_g_y: "<<v_g.getY());
 
 		//Calculate the time difference in nano second.
 		double t_sec = navdata->header.stamp.sec;
@@ -82,17 +81,17 @@ public:
 		time_pre_sec = navdata->header.stamp.sec;
 		time_pre_nsec = navdata->header.stamp.nsec;
 
-		//calculate pose differences
-		float dx = v_g.getX() * dt;
-		float dy = v_g.getY() * dt;
-		float dz = navdata->altd - pose_.getOrigin().getZ();
+		//calculate pose differences, unit changes to meter
+		float dx = v_g.getX() * dt *0.001;
+		float dy = v_g.getY() * dt *0.001;
+		float dz = navdata->altd*0.001 - pose_.getOrigin().getZ();
 
-		x_t = (pose_.getOrigin().getX() + dx) * 0.001 ; // mm to meters
-		y_t = (pose_.getOrigin().getY() + dy) * 0.001 ; // mm to meters
+		x_t = pose_.getOrigin().getX() + dx;
+		y_t = pose_.getOrigin().getY() + dy;
 		z_t = navdata->altd * 0.001;    // assign altitude since z_t 0.0 in bag files, // mm to meters
 
 		dist = dist + sqrt(dx*dx+dy*dy+dz*dz); //Calculate travelled distance
-		heightSum = heightSum + navdata->altd;
+		heightSum = heightSum + navdata->altd*0.001;
 		iteration = iteration + 1;
 		ROS_INFO_STREAM("Distance travelled: " << dist << " Mean height: " << heightSum/iteration);
 
